@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  bpm-admin:
+    image: szopen/bpm-explorer
+    ports:
+      - 7080:80
+    depends_on:
+      - bpm-rest
+    links:
+      - bpm-rest
+  bpm-mobile:
+    image: szopen/bpm-mobile
+    ports:
+      - 7082:80
+    depends_on:
+      - bpm-rest
+    links:
+      - bpm-rest
+  bpm-rest:
+    image: szopen/bpm-rest
+    container_name: bpm-rest
+    environment:
+      - spring.profiles.active=demo
+      - redis_host=redis
+    #ports:
+    #  - 7081:8080
+    depends_on:
+      - bpm-mysql
+      - bpm-redis
+    links:
+      - bpm-mysql:mysql
+      - bpm-redis:redis
+    restart: always
+  bpm-mysql:
+    image: mysql/mysql-server:5.7
+    container_name: bpm-mysql
+    environment:
+      - TZ=Asia/Shanghai
+      - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_ROOT_HOST=%
+      - MYSQL_DATABASE=eap_bpm
+      - MYSQL_USER=bpm
+      - MYSQL_PASSWORD=bpm
+    command:
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_general_ci
+      --explicit_defaults_for_timestamp=true
+      --lower_case_table_names=0
+      --max_allowed_packet=128M
+      --sql-mode="STRICT_TRANS_TABLES,NO_AUTO_CREATE_USER,NO_ENGINE_SUBSTITUTION,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO"
+    volumes:
+      - bpm-mysql-data:/var/lib/mysql
+  bpm-redis:
+    image: redis:5
+    container_name: bpm-redis
+    volumes:
+      - bpm-redis-data:/data
+volumes:
+  bpm-mysql-data:
+  bpm-redis-data:
